@@ -11,7 +11,7 @@ from websockets.legacy.client import WebSocketClientProtocol
 
 from pkmai.room.battle import Battle
 from pkmai.room.chat import Chat
-from pkmai.room.room import Room
+from pkmai.room.room import Room, compute_all_listeners
 from pkmai.utils.exception import get_traceback
 
 
@@ -20,13 +20,7 @@ class Client(Room):
     # ------------------------- Constructor / Destructor ------------------------- #
 
     def __init__(self, conn: WebSocketClientProtocol, debug: bool) -> None:
-        super().__init__(
-            conn,
-            {},
-            "",
-            {"challstr": self.__challstr, "updateuser": self.__updateuser},
-            debug=debug,
-        )
+        super().__init__(conn, {}, "", compute_all_listeners(self), debug=debug)
         self.rooms: Dict[str, Room] = {self.room_id: self}
         self.battles: Dict[str, Battle] = {}
         self.chats: Dict[str, Chat] = {}
@@ -143,8 +137,8 @@ class Client(Room):
 
     # --------------------------------- Listener --------------------------------- #
 
-    def __challstr(self, msg: List[str]):
+    def listener_challstr(self, msg: List[str]):
         self.data["challstr"] = "|".join(msg)
 
-    def __updateuser(self, msg: List[str]):
+    def listener_updateuser(self, msg: List[str]):
         self.data["username"] = msg[0][1:]

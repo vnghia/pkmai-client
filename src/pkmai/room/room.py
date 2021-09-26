@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import abc
+import inspect
 import threading
 from queue import SimpleQueue
 from typing import Any, Dict, List, Optional, Tuple
@@ -64,3 +67,12 @@ class Room(abc.ABC):
 
     async def send(self, text: str):
         await self.conn.send(f"{self.room_id}|{text}")
+
+
+def compute_all_listeners(room: Room) -> Dict[str, ListernerT]:
+    methods = inspect.getmembers(room, inspect.ismethod)
+    listeners: Dict[str, ListernerT] = {}
+    for (name, method) in methods:
+        if name.startswith("listener_"):
+            listeners[name[len("listener_") :].replace("_", "-")] = method
+    return listeners

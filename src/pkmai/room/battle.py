@@ -1,6 +1,7 @@
 from typing import Dict, List
 
 from pkmai.room.chat import Chat
+from pkmai.room.room import compute_all_listeners
 from pkmai.utils.type import GlobalData, PlayerData
 from websockets.legacy.client import WebSocketClientProtocol
 
@@ -19,16 +20,7 @@ class Battle(Chat):
         )
         self.players: Dict[str, PlayerData] = {}
         self.rules: Dict[str, str] = {}
-        self.listeners.update(
-            {
-                "player": self.__player,
-                "teamsize": self.__teamsize,
-                "gametype": self.__gametype,
-                "gen": self.__gen,
-                "tier": self.__tier,
-                "rule": self.__rule,
-            }
-        )
+        self.listeners.update(compute_all_listeners(self))
 
     # -------------------------------- User Method ------------------------------- #
 
@@ -39,25 +31,25 @@ class Battle(Chat):
 
     # --------------------------------- Listener --------------------------------- #
 
-    def __player(self, msg: List[str]):
+    def listener_player(self, msg: List[str]):
         self.players[msg[0]] = {"name": msg[1]}
         if msg[2]:
             self.players[msg[0]]["rating"] = int(msg[2])
         if msg[1] == self.data["username"]:
             self.self_id = msg[0]
 
-    def __teamsize(self, msg: List[str]):
+    def listener_teamsize(self, msg: List[str]):
         self.players[msg[0]]["teamsize"] = int(msg[1])
 
-    def __gametype(self, msg: List[str]):
+    def listener_gametype(self, msg: List[str]):
         self.gametype = msg[0]
 
-    def __gen(self, msg: List[str]):
+    def listener_gen(self, msg: List[str]):
         self.gen = int(msg[0])
 
-    def __tier(self, msg: List[str]):
+    def listener_tier(self, msg: List[str]):
         self.tier = msg[0]
 
-    def __rule(self, msg: List[str]):
+    def listener_rule(self, msg: List[str]):
         name, des = msg[0].split(": ")
         self.rules[name] = des
