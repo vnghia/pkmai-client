@@ -1,9 +1,9 @@
 import threading
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from pkmai.room.room import Room
 from pkmai.utils.exception import raise_from_message
-from pkmai.utils.type import GlobalData
+from pkmai.utils.type import GlobalData, ListernerT
 from websockets.legacy.client import WebSocketClientProtocol
 
 
@@ -15,22 +15,17 @@ class Chat(Room):
         room_id: str,
         debug: bool = False,
         logs: List[List[str]] = None,
+        good_after_msg_type: str = "init",
     ) -> None:
-        super().__init__(
-            conn,
-            data,
-            room_id,
-            {
-                "init": self.__init,
-                "noinit": self.__noinit,
-                "title": self.__title,
-                "c": self.__chat,
-                "chat": self.__chat,
-                "c:": self.__chat_timestamp,
-            },
-            debug=debug,
-            logs=logs,
-        )
+        listeners: Dict[str, ListernerT] = {
+            good_after_msg_type: self.__set_good,
+            "noinit": self.__noinit,
+            "title": self.__title,
+            "c": self.__chat,
+            "chat": self.__chat,
+            "c:": self.__chat_timestamp,
+        }
+        super().__init__(conn, data, room_id, listeners, debug=debug, logs=logs)
         self.is_good = threading.Event()
         self.chats: List[Tuple[int, str, str]] = []
 
@@ -42,7 +37,7 @@ class Chat(Room):
 
     # --------------------------------- Listener --------------------------------- #
 
-    def __init(self, _: List[str]):
+    def __set_good(self, _: List[str]):
         self.is_good.set()
 
     def __noinit(self, msg: List[str]):

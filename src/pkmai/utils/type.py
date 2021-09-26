@@ -6,4 +6,10 @@ class GlobalData(TypedDict, total=False):
     username: str
 
 
+class PlayerData(TypedDict, total=False):
+    name: str
+    rating: int
+    teamsize: int
+
+
 ListernerT = Callable[[List[str]], None]
