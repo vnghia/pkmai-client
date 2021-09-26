@@ -69,6 +69,8 @@ class SideData(TypedDict, total=False):
 
 
 class RequestData(TypedDict, total=False):
+    force_switch: bool
     active: ActiveData
     side: SideData
+    no_cancel: bool
     rqid: int

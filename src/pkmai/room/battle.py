@@ -68,13 +68,20 @@ class Battle(Chat):
     def listener_request(self, msg: List[str]):
         if msg[0]:
             raw = json.loads(msg[0])
-            raw_active = raw["active"][0]
-            self.request["active"] = {
-                "moves": raw_active["moves"],
-                "can_dynamax": raw_active.get("canDynamax", False),
-            }
-            if self.request["active"]["can_dynamax"]:
-                self.request["active"]["max_moves"] = raw_active["maxMoves"]["maxMoves"]
+            if raw.get("forceSwitch"):
+                self.request["force_switch"] = True
+            elif raw.get("active"):
+                raw_active = raw["active"][0]
+                self.request["active"] = {
+                    "moves": raw_active["moves"],
+                    "can_dynamax": raw_active.get("canDynamax", False),
+                }
+                if self.request["active"]["can_dynamax"]:
+                    self.request["active"]["max_moves"] = raw_active["maxMoves"][
+                        "maxMoves"
+                    ]
+            if raw.get("noCancel"):
+                self.request["no_cancel"] = True
             raw_side = raw["side"]
             self.request["side"] = {
                 "name": raw_side["name"],
