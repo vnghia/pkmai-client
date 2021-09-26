@@ -47,6 +47,7 @@ class PokemonData(TypedDict, total=False):
     gender: Literal["M", "F"]
     current_hp: int
     total_hp: int
+    status: str
     active: bool
     stats: PokemonStat
     moves: List[str]
