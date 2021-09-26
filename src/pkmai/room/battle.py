@@ -1,9 +1,16 @@
 import json
-from typing import Dict, List, Tuple
+from typing import Dict, List, Literal, Tuple
 
 from pkmai.room.chat import Chat
 from pkmai.room.room import compute_all_listeners
-from pkmai.utils.type import GlobalData, PlayerData, PokemonData, RequestData
+from pkmai.utils.type import (
+    ActiveData,
+    GlobalData,
+    PlayerData,
+    PokemonData,
+    RequestData,
+    SideData,
+)
 from websockets.legacy.client import WebSocketClientProtocol
 
 
@@ -74,56 +81,20 @@ class Battle(Chat):
         if msg[0]:
             raw = json.loads(msg[0])
             request: RequestData = {}
-            if raw.get("forceSwitch"):
+            if "forceSwitch" in raw:
                 request["force_switch"] = True
-            elif raw.get("active"):
-                raw_active = raw["active"][0]
-                request["active"] = {
-                    "moves": raw_active["moves"],
-                    "can_dynamax": raw_active.get("canDynamax", False),
-                }
-                if request["active"]["can_dynamax"]:
-                    request["active"]["max_moves"] = raw_active["maxMoves"]["maxMoves"]
-            if raw.get("noCancel"):
+            if "noCancel" in raw:
                 request["no_cancel"] = True
-            raw_side = raw["side"]
-            request["side"] = {
-                "name": raw_side["name"],
-                "id": raw_side["id"],
-                "pokemons": [],
-            }
-            for pokemon_data in raw_side["pokemon"]:
-                details = pokemon_data["details"].split(", ")
-                pokemon: PokemonData = {
-                    "ident": pokemon_data["ident"],
-                    "species": details[0],
-                    "level": 100,
-                }
-                for detail in details[1:]:
-                    if detail == "M" or detail == "F":
-                        pokemon["gender"] = detail
-                    elif detail.startswith("L"):
-                        pokemon["level"] = int(detail[1:])
-                current_hp, total_hp, status = self.parse_condition(
-                    pokemon_data["condition"]
-                )
-                pokemon["current_hp"] = current_hp
-                pokemon["total_hp"] = total_hp
-                pokemon["status"] = status
-                pokemon["active"] = pokemon_data["active"]
-                pokemon["moves"] = pokemon_data["moves"]
-                pokemon["base_ability"] = pokemon_data["baseAbility"]
-                pokemon["item"] = pokemon_data["item"]
-                pokemon["pokeball"] = pokemon_data["pokeball"]
-                pokemon["ability"] = pokemon_data["ability"]
-                request["side"]["pokemons"].append(pokemon)
+            if "active" in raw:
+                request["active"] = self.parse_request_active(raw["active"][0])
+            request["side"] = self.parse_request_side(raw["side"])
             request["rqid"] = raw["rqid"]
             self.requests.append(request)
 
     # ----------------------------------- Util ----------------------------------- #
 
     @staticmethod
-    def parse_condition(condition: str) -> Tuple[int, int, str]:
+    def parse_pokemon_condition(condition: str) -> Tuple[int, int, str]:
         conditions = condition.split(" ")
         hps = conditions[0].split("/")
         if len(hps) == 2:
@@ -135,3 +106,62 @@ class Battle(Chat):
         else:
             status = ""
         return current_hp, total_hp, status
+
+    @staticmethod
+    def parse_pokemon_detail(detail: str) -> Tuple[str, Literal["M", "F", "N"], int]:
+        details = detail.split(", ")
+        species = details[0]
+        gender: Literal["M", "F", "N"] = "N"
+        level = 100
+        for detail in details[1:]:
+            if detail == "M":
+                gender = "M"
+            elif detail == "F":
+                gender = "F"
+            elif detail.startswith("L"):
+                level = int(detail[1:])
+        return species, gender, level
+
+    @staticmethod
+    def parse_request_pokemon(pokemon_raw: Dict) -> PokemonData:
+        pokemon: PokemonData = {"ident": pokemon_raw["ident"]}
+        species, gender, level = Battle.parse_pokemon_detail(pokemon_raw["details"])
+        pokemon.update({"species": species, "gender": gender, "level": level})
+
+        current_hp, total_hp, status = Battle.parse_pokemon_condition(
+            pokemon_raw["condition"]
+        )
+        pokemon.update(
+            {"current_hp": current_hp, "total_hp": total_hp, "status": status}
+        )
+
+        pokemon["active"] = pokemon_raw["active"]
+        pokemon["moves"] = pokemon_raw["moves"]
+        pokemon["base_ability"] = pokemon_raw["baseAbility"]
+        pokemon["item"] = pokemon_raw["item"]
+        pokemon["pokeball"] = pokemon_raw["pokeball"]
+        pokemon["ability"] = pokemon_raw["ability"]
+
+        return pokemon
+
+    @staticmethod
+    def parse_request_active(active_raw: Dict) -> ActiveData:
+        active: ActiveData = {
+            "moves": active_raw["moves"],
+        }
+        if "canDynamax" in active_raw:
+            active["can_dynamax"] = True
+        if "maxMoves" in active_raw:
+            active["max_moves"] = active_raw["maxMoves"]["maxMoves"]
+        return active
+
+    @staticmethod
+    def parse_request_side(side_raw: Dict) -> SideData:
+        side: SideData = {
+            "name": side_raw["name"],
+            "id": side_raw["id"],
+            "pokemons": [],
+        }
+        for pokemon_raw in side_raw["pokemon"]:
+            side["pokemons"].append(Battle.parse_request_pokemon(pokemon_raw))
+        return side
