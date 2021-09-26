@@ -31,6 +31,15 @@ class Battle(Chat):
         if leave:
             await self.leave()
 
+    async def choose(self, choice: str):
+        await self.send(f"/choose {choice}")
+
+    async def choose_default(self):
+        await self.choose("default")
+
+    async def choose_undo(self):
+        await self.choose("undo")
+
     # --------------------------------- Listener --------------------------------- #
 
     def listener_player(self, msg: List[str]):
