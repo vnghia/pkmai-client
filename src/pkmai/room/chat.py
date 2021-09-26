@@ -15,10 +15,11 @@ class Chat(Room):
         room_id: str,
         debug: bool = False,
         logs: List[List[str]] = None,
-        good_after_msg_type: str = "init",
+        custom_good_event: bool = False,
     ) -> None:
         listeners = compute_all_listeners(self)
-        listeners[good_after_msg_type] = self.__listener_good_signal
+        if not custom_good_event:
+            listeners["init"] = self.__emitter_good_event
         listeners["c:"] = self.__listener_chat_timestamp
 
         super().__init__(conn, data, room_id, listeners, debug=debug, logs=logs)
@@ -44,7 +45,7 @@ class Chat(Room):
 
     listener_c = listener_chat
 
-    def __listener_good_signal(self, _: List[str]):
+    def __emitter_good_event(self, _: List[str]):
         self.is_good.set()
 
     def __listener_chat_timestamp(self, msg: List[str]):

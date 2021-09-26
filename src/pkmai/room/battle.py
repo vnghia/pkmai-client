@@ -17,7 +17,7 @@ class Battle(Chat):
         logs: List[List[str]] = None,
     ) -> None:
         super().__init__(
-            conn, data, room_id, debug=debug, logs=logs, good_after_msg_type="start"
+            conn, data, room_id, debug=debug, logs=logs, custom_good_event=True
         )
         self.players: Dict[str, PlayerData] = {}
         self.rules: Dict[str, str] = {}
@@ -64,6 +64,11 @@ class Battle(Chat):
     def listener_rule(self, msg: List[str]):
         name, des = msg[0].split(": ")
         self.rules[name] = des
+
+    def listener_turn(self, msg: List[str]):
+        turn = int(msg[0])
+        if turn == 1:
+            self.is_good.set()
 
     def listener_request(self, msg: List[str]):
         if msg[0]:
