@@ -1,4 +1,4 @@
-from typing import Callable, List, Literal, TypedDict
+from typing import Callable, List, Literal, Optional, TypedDict
 
 
 class GlobalData(TypedDict, total=False):
@@ -27,17 +27,16 @@ class MoveData(TypedDict, total=False):
     disable: bool
 
 
-class MaxMoveData(TypedDict, total=False):
+class SpeicalMoveData(TypedDict, total=False):
     move: str
     target: Literal["self", "adjacentFoe"]
 
 
-class PokemonStat(TypedDict, total=False):
-    atk: int
-    defense: int
-    spa: int
-    spd: int
-    spe: int
+PokemonStat = TypedDict(
+    "PokemonStat",
+    {"atk": int, "def": int, "spa": int, "spd": int, "spe": int},
+    total=False,
+)
 
 
 class PokemonData(TypedDict, total=False):
@@ -60,7 +59,9 @@ class PokemonData(TypedDict, total=False):
 class ActiveData(TypedDict, total=False):
     moves: List[MoveData]
     can_dynamax: bool
-    max_moves: List[MaxMoveData]
+    max_moves: List[SpeicalMoveData]
+    can_mega_evo: bool
+    can_z_move: List[Optional[SpeicalMoveData]]
 
 
 class SideData(TypedDict, total=False):

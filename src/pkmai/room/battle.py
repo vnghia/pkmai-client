@@ -153,6 +153,10 @@ class Battle(Chat):
             active["can_dynamax"] = True
         if "maxMoves" in active_raw:
             active["max_moves"] = active_raw["maxMoves"]["maxMoves"]
+        if "canMegaEvo" in active_raw:
+            active["can_mega_evo"] = True
+        if "canZMove" in active_raw:
+            active["can_z_move"] = active_raw["canZMove"]
         return active
 
     @staticmethod
