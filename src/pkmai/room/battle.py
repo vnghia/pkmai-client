@@ -1,6 +1,13 @@
 import json
-from typing import Dict, List, Literal, Tuple
+from typing import Dict, List, Literal, Tuple, Union
 
+from pkmai.choose.choose import (
+    Choose,
+    SinglePokemonChoose,
+    SwitchChoose,
+    parse_pokemon_choose,
+    parse_switch_choose,
+)
 from pkmai.room.chat import Chat
 from pkmai.room.room import compute_all_listeners
 from pkmai.utils.type import (
@@ -38,7 +45,7 @@ class Battle(Chat):
         if leave:
             await self.leave()
 
-    async def choose(self, choice: str):
+    async def choose(self, choice: Union[str, Choose]):
         await self.send(f"/choose {choice}")
 
     async def choose_default(self):
@@ -46,6 +53,12 @@ class Battle(Chat):
 
     async def choose_undo(self):
         await self.choose("undo")
+
+    def get_all_valid_pokemon_chooses(self) -> List[SinglePokemonChoose]:
+        return parse_pokemon_choose(self.requests[-1]["active"])
+
+    def get_all_valid_switch_chooses(self) -> List[SwitchChoose]:
+        return parse_switch_choose(self.requests[-1]["side"]["pokemons"])
 
     # --------------------------------- Listener --------------------------------- #
 
