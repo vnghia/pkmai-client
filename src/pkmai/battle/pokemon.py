@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 from typing import Dict, List, Literal, Optional, Tuple
 
 from pkmai.battle.move import Move
@@ -10,8 +9,7 @@ from pkmai.battle.stats import Stats
 class Pokemon:
     def __init__(
         self,
-        ident: str,
-        pos: int,
+        team_pos: int,
         player_id: str,
         name: str,
         species: str,
@@ -23,8 +21,8 @@ class Pokemon:
         base_ability: str = "",
         item: str = "",
     ) -> None:
-        self._ident = ident
-        self._pos = pos
+        self._team_pos = team_pos
+        self._battle_pos = ""
         self._player_id = player_id
         self._name = name
         self._species = species
@@ -46,16 +44,16 @@ class Pokemon:
         self._can_zmove = False
 
     @property
-    def ident(self) -> str:
-        return self._ident
+    def team_pos(self) -> int:
+        return self._team_pos
 
     @property
-    def pos(self) -> int:
-        return self._pos
+    def battle_pos(self) -> str:
+        return self._battle_pos
 
-    @pos.setter
-    def pos(self, pos: int):
-        self._pos = pos
+    @battle_pos.setter
+    def battle_pos(self, battle_pos: str):
+        self._battle_pos = battle_pos
 
     @property
     def player_id(self) -> str:
@@ -172,7 +170,7 @@ class Pokemon:
         return f"({hex(id(self))}) {self}"
 
     def __str__(self) -> str:
-        return f"{self.ident}\n{self.species}, {self.level}\n{'; '.join(map(str, self.moves))}"
+        return f"{self.name}, {self.species}, {self.level}\n{'; '.join(map(str, self.moves))}"
 
     # ---------------------------------- Parsing --------------------------------- #
 
@@ -213,7 +211,7 @@ class Pokemon:
     # ---------------------------------- Request --------------------------------- #
 
     @classmethod
-    def create_from_request(cls, pokemon_dict: Dict, pos: int) -> Pokemon:
+    def create_from_request(cls, pokemon_dict: Dict, team_pos: int) -> Pokemon:
         ident = pokemon_dict["ident"]
         player_id, name = cls.parse_ident(ident)
         species, gender, level = cls.parse_detail(pokemon_dict["details"])
@@ -228,8 +226,7 @@ class Pokemon:
             moves.append(Move(move))
 
         return cls(
-            ident,
-            pos,
+            team_pos,
             player_id,
             name,
             species,
@@ -287,17 +284,10 @@ class Pokemon:
         elif "maxMoves" not in active_dict and self._max_moves:
             self.state = ""
 
-    def update_from_request(self, pokemon_dict: Dict, in_place=False) -> Pokemon:
-        if in_place:
-            pokemon = self
-        else:
-            pokemon = copy.deepcopy(self)
-
-        hp, _, status = pokemon.parse_condition(pokemon_dict["condition"])
-        pokemon.hp = hp
-        pokemon.status = status
-        pokemon.stats.update_from_request(pokemon_dict["stats"])
-        pokemon.ability = pokemon_dict["ability"]
-        pokemon.item = pokemon_dict["item"]
-
-        return pokemon
+    def update_from_request(self, pokemon_dict: Dict):
+        hp, _, status = self.parse_condition(pokemon_dict["condition"])
+        self.hp = hp
+        self.status = status
+        self.stats.update_from_request(pokemon_dict["stats"])
+        self.ability = pokemon_dict["ability"]
+        self.item = pokemon_dict["item"]
