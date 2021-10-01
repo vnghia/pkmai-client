@@ -5,7 +5,7 @@ import json
 import ssl
 from typing import Dict, List, Optional
 
-import aiohttp
+import requests
 from websockets.client import connect as wsconnect
 from websockets.legacy.client import WebSocketClientProtocol
 
@@ -89,21 +89,19 @@ class Client(Room):
                 break
         if "challstr" not in self.data:
             raise ValueError("Missing challstr")
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                "https://play.pokemonshowdown.com/action.php?",
-                data={
-                    "act": "login",
-                    "name": username,
-                    "pass": password,
-                    "challstr": self.data["challstr"],
-                },
-            ) as resp:
-                resp.raise_for_status()
-                body = await resp.text()
-                data = json.loads(body[1:])
-                await self.send(f"/trn {username},0,{data['assertion']}")
-                self.data["username"] = username
+        resp = requests.post(
+            "https://play.pokemonshowdown.com/action.php?",
+            json={
+                "act": "login",
+                "name": username,
+                "pass": password,
+                "challstr": self.data["challstr"],
+            },
+        )
+        resp.raise_for_status()
+        data = json.loads(resp.text[1:])
+        await self.send(f"/trn {username},0,{data['assertion']}")
+        self.data["username"] = username
 
     async def join_chat(self, room_id: str) -> Chat:
         room = Chat(self.conn, self.data, room_id, self.debug)
