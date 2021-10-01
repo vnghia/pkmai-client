@@ -84,6 +84,14 @@ class Move:
     def disable(self) -> bool:
         return self._disable
 
+    # ---------------------------------- String ---------------------------------- #
+
+    def __repr__(self) -> str:
+        return f"({hex(id(self))}) {self}"
+
+    def __str__(self) -> str:
+        return self.name if self.name else self.id
+
     # ---------------------------------- Request --------------------------------- #
 
     def update_from_request(self, move_dict: Dict):

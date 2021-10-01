@@ -118,6 +118,14 @@ class Stats:
             stats_dict["spe"],
         )
 
+    # ---------------------------------- String ---------------------------------- #
+
+    def __repr__(self) -> str:
+        return f"({hex(id(self))}) {self}"
+
+    def __str__(self) -> str:
+        return f"atk: {self.atk}, def: {self.def_}, spa: {self.spa}, spd: {self.spd}, spe: {self.spa}"
+
     # ---------------------------------- Request --------------------------------- #
 
     def update_from_request(self, stats_dict: Dict):

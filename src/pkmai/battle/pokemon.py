@@ -166,6 +166,14 @@ class Pokemon:
             del self._zmoves
             self._can_zmove = can_zmove
 
+    # ---------------------------------- String ---------------------------------- #
+
+    def __repr__(self) -> str:
+        return f"({hex(id(self))}) {self}"
+
+    def __str__(self) -> str:
+        return f"{self.ident}\n{self.species}, {self.level}\n{'; '.join(map(str, self.moves))}"
+
     # ---------------------------------- Parsing --------------------------------- #
 
     @staticmethod
