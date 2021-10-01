@@ -9,7 +9,7 @@ import aiohttp
 from websockets.client import connect as wsconnect
 from websockets.legacy.client import WebSocketClientProtocol
 
-from pkmai.room.battle import Battle
+from pkmai.battle.battle import Battle
 from pkmai.room.chat import Chat
 from pkmai.room.room import Room, compute_all_listeners
 from pkmai.utils.exception import get_traceback
