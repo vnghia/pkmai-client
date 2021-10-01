@@ -2,6 +2,7 @@ import json
 from typing import Dict, List
 
 from pkmai.battle.request import Request
+from pkmai.battle.state import State
 from pkmai.room.chat import Chat
 from pkmai.room.room import compute_all_listeners
 from pkmai.utils.type import GlobalData, PlayerData
@@ -24,6 +25,7 @@ class Battle(Chat):
         self.rules: Dict[str, str] = {}
         self.listeners.update(compute_all_listeners(self))
         self.requests: List[Request] = []
+        self.states: List[State] = [State(positions=None)]
 
     # -------------------------------- User Method ------------------------------- #
 
@@ -69,7 +71,10 @@ class Battle(Chat):
     def listener_turn(self, msg: List[str]):
         turn = int(msg[0])
         if turn == 1:
+            self.states[-1].pokemons.update(self.requests[0].pokemons)
+            self.states[-1].positions.extend(self.requests[0].positions)
             self.is_good.set()
+        self.states.append(State(positions=None))
 
     def listener_request(self, msg: List[str]):
         if msg[0]:
