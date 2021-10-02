@@ -124,6 +124,7 @@ class MoveSet:
         self,
         moves: List[Move] = None,
         max_moves: List[Move] = None,
+        max_moves_to_moves: Dict[str, str] = None,
         zmoves: List[Move] = None,
         can_max: bool = False,
         can_z: bool = False,
@@ -131,6 +132,10 @@ class MoveSet:
     ):
         self._moves = moves or []
         self._max_moves = max_moves or []
+        self._max_moves_to_moves = max_moves_to_moves or {}
+        self._moves_to_max_moves = {
+            value: key for key, value in self._max_moves_to_moves.items()
+        }
         self._zmoves = zmoves or []
         self._moves_name: Dict[str, int] = {
             move.name: idx for idx, move in enumerate(self._moves)
@@ -159,6 +164,15 @@ class MoveSet:
         if not self.can_max:
             return []
         return self._max_moves
+
+    def __set_max_moves_to_moves(self, max_moves_to_moves: Dict[str, str]):
+        self._max_moves_to_moves = max_moves_to_moves
+        self._moves_to_max_moves = {
+            value: key for key, value in self._max_moves_to_moves.items()
+        }
+
+    max_moves_to_moves = property(fset=__set_max_moves_to_moves)
+    del __set_max_moves_to_moves
 
     @property
     def zmoves(self) -> List[Move]:
@@ -234,8 +248,14 @@ class MoveSet:
     def add(self, name, used=True):
         if name in self.moves_name:
             self.moves[self.moves_name[name]].pp -= 1
+            if name in self._moves_to_max_moves:
+                index = self.max_moves_name[self._moves_to_max_moves[name]]
+                self.max_moves[index].pp -= 1
         elif name in self.max_moves_name:
             self.max_moves[self.max_moves_name[name]].pp -= 1
+            if name in self._max_moves_to_moves:
+                index = self.moves_name[self._max_moves_to_moves[name]]
+                self.moves[index].pp -= 1
         elif name in self.zmoves_name:
             self.zmoves[self.zmoves_name[name]].pp -= 1
             self.can_z = False
