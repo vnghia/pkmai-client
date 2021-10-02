@@ -71,7 +71,6 @@ class Request:
                 actives.append(idx)
                 active_dict = request["active"][len(actives) - 1]
                 trappeds.append("trapped" in active_dict)
-                pokemon.update_active_from_request(active_dict)
             pokemons[(pokemon.player_id, pokemon.name)] = pokemon
             positions.append((pokemon.player_id, pokemon.name))
         force_switchs = request.get("forceSwitch", [False] * len(actives))
