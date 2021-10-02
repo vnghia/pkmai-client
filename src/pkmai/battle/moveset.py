@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Literal, Optional, Tuple, TypedDict
+from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict, cast
 
 from pkmai.battle.move import Move
 
@@ -19,20 +19,12 @@ class Moveset:
     def __index(
         self, name: str, mtype: Literal["normal", "max", "z"] | None = None
     ) -> Tuple[str, int, Move] | Tuple[None, None, None]:
-        if mtype:
-            for index, move in enumerate(self.moves[mtype]):
-                if move and move.name == name:
-                    return (name, index, move)
-        else:
-            for index, move in enumerate(self.moves["normal"]):
-                if move.name == name:
-                    return (name, index, move)
-            for index, move in enumerate(self.moves["max"]):
-                if move.name == name:
-                    return (name, index, move)
-            for index, move in enumerate(self.moves["z"]):
-                if move and move.name == name:
-                    return (name, index, move)
+        mtypes = [mtype] if mtype else ["normal", "max", "z"]
+        for type in mtypes:
+            if type in self.moves:
+                for index, move in enumerate(self.moves[type]):
+                    if move and move.name == name:
+                        return (name, index, move)
         return None, None, None
 
     def move_from_recv(
@@ -43,26 +35,19 @@ class Moveset:
             move = Move(name)
             self.moves[move.type].append(move)
 
-    def move_from_request(
-        self,
-        move_list: List[Optional[Dict]],
-        mtype: Literal["normal", "max", "z"],
-    ):
-        if mtype not in self.moves:
-            if mtype == "normal":
-                self.moves["normal"] = []
-            elif mtype == "max":
-                self.moves["max"] = []
-            else:
-                self.moves["z"] = []
-        for move_dict in move_list:
-            if not move_dict:
-                if mtype == "z":
-                    self.moves["z"].append(None)
+    def move_from_request(self, move_list: List[Dict | str | None]):
+        for move_data in move_list:
+            if not move_data:
+                self.moves["z"].append(None)
                 continue
-            _, index, move = self.__index(move_dict["move"], mtype)
+            move_dict: Dict[str, Any] = (
+                {"move": move_data} if isinstance(move_data, str) else move_data
+            )
+            _, index, move = self.__index(move_dict["move"])
             if not index or not move:
                 move = Move(move_dict["move"])
+                if move.type not in self.moves:
+                    self.moves[move.type] = cast(List[Move], [])
                 self.moves[move.type].append(move)
                 index = len(self.moves) - 1
             if "pp" in move_dict:
