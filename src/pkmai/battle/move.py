@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Dict, Literal
 
 
@@ -91,6 +93,14 @@ class Move:
 
     def __str__(self) -> str:
         return self.name if self.name else self.id
+
+    # ----------------------------------- Copy ----------------------------------- #
+
+    def clone(self) -> Move:
+        clone = Move(self.id, self.name, self.maxpp, self.target, self.type)
+        clone._pp = self._pp
+        clone._disable = self._disable
+        return clone
 
     # ---------------------------------- Request --------------------------------- #
 

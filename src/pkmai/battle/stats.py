@@ -126,6 +126,17 @@ class Stats:
     def __str__(self) -> str:
         return f"atk: {self.atk}, def: {self.def_}, spa: {self.spa}, spd: {self.spd}, spe: {self.spa}"
 
+    # ----------------------------------- Copy ----------------------------------- #
+
+    def clone(self) -> Stats:
+        clone = Stats(self.atk, self.def_, self.spa, self.spd, self.spe)
+        clone._boost_atk = self._boost_atk
+        clone._boost_def = self._boost_def
+        clone._boost_spa = self._boost_spa
+        clone._boost_spd = self._boost_spd
+        clone._boost_spe = self._boost_spe
+        return clone
+
     # ---------------------------------- Request --------------------------------- #
 
     def update_from_request(self, stats_dict: Dict):

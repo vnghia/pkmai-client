@@ -66,7 +66,7 @@ class Request:
         actives: List[int] = []
         trappeds: List[bool] = []
         for idx, pokemon_dict in enumerate(request["side"]["pokemon"]):
-            pokemon = Pokemon.create_from_request(pokemon_dict, idx)
+            pokemon = Pokemon.create_from_request(pokemon_dict)
             if pokemon_dict["active"] and "active" in request:
                 actives.append(idx)
                 active_dict = request["active"][len(actives) - 1]

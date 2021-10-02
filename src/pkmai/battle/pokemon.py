@@ -9,7 +9,6 @@ from pkmai.battle.stats import Stats
 class Pokemon:
     def __init__(
         self,
-        team_pos: int,
         player_id: str,
         name: str,
         species: str,
@@ -21,8 +20,6 @@ class Pokemon:
         base_ability: str = "",
         item: str = "",
     ) -> None:
-        self._team_pos = team_pos
-        self._battle_pos = ""
         self._player_id = player_id
         self._name = name
         self._species = species
@@ -42,18 +39,6 @@ class Pokemon:
         self._can_mega = False
         self._can_max = False
         self._can_zmove = False
-
-    @property
-    def team_pos(self) -> int:
-        return self._team_pos
-
-    @property
-    def battle_pos(self) -> str:
-        return self._battle_pos
-
-    @battle_pos.setter
-    def battle_pos(self, battle_pos: str):
-        self._battle_pos = battle_pos
 
     @property
     def player_id(self) -> str:
@@ -143,7 +128,7 @@ class Pokemon:
         ):
             raise ValueError(f"Can not {state}")
         elif state == "" and self._state == "max":
-            del self._max_moves
+            self._max_moves.clear()
         self._state = state
 
     @property
@@ -161,7 +146,7 @@ class Pokemon:
     @can_zmove.setter
     def can_zmove(self, can_zmove: bool):
         if self._can_zmove and not can_zmove:
-            del self._zmoves
+            self._zmoves.clear()
             self._can_zmove = can_zmove
 
     # ---------------------------------- String ---------------------------------- #
@@ -172,12 +157,42 @@ class Pokemon:
     def __str__(self) -> str:
         return f"{self.name}, {self.species}, {self.level}\n{'; '.join(map(str, self.moves))}"
 
+    # ----------------------------------- Copy ----------------------------------- #
+
+    def clone(self) -> Pokemon:
+        clone = Pokemon(
+            self._player_id,
+            self._name,
+            self._species,
+            self._level,
+            self._gender,
+            self._total_hp,
+            self._stats.clone(),
+            [move.clone() for move in self._moves],
+            self._base_ability,
+            self._item,
+        )
+        clone._status = self._status
+        clone._max_moves = self._max_moves
+        clone._zmoves = self._zmoves
+        clone._ability = self._ability
+        clone._state = self._state
+        clone._can_mega = self._can_mega
+        clone._can_max = self._can_max
+        clone._can_zmove = self._can_zmove
+        return clone
+
     # ---------------------------------- Parsing --------------------------------- #
 
     @staticmethod
     def parse_ident(ident: str) -> Tuple[str, str]:
         player_id, name = ident.split(": ", maxsplit=1)
         return player_id, name
+
+    @staticmethod
+    def parse_active_ident(ident: str) -> Tuple[str, str, str]:
+        res, name = Pokemon.parse_ident(ident)
+        return res[:-1], res[-1], name
 
     @staticmethod
     def parse_detail(detail: str) -> Tuple[str, Literal["M", "F", ""], int]:
@@ -211,7 +226,7 @@ class Pokemon:
     # ---------------------------------- Request --------------------------------- #
 
     @classmethod
-    def create_from_request(cls, pokemon_dict: Dict, team_pos: int) -> Pokemon:
+    def create_from_request(cls, pokemon_dict: Dict) -> Pokemon:
         ident = pokemon_dict["ident"]
         player_id, name = cls.parse_ident(ident)
         species, gender, level = cls.parse_detail(pokemon_dict["details"])
@@ -226,7 +241,6 @@ class Pokemon:
             moves.append(Move(move))
 
         return cls(
-            team_pos,
             player_id,
             name,
             species,
