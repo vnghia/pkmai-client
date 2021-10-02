@@ -231,7 +231,7 @@ class MoveSet:
         clone._can_z = self._can_z
         return clone
 
-    def add(self, name):
+    def add(self, name, used=True):
         if name in self.moves_name:
             self.moves[self.moves_name[name]].pp -= 1
         elif name in self.max_moves_name:
@@ -244,11 +244,15 @@ class MoveSet:
         if "isMax" in move_dict:
             move._type = "max"
             self.max_moves.append(move)
-            self.max_moves_name[move.name] = len(self.max_moves) - 1
+            if used:
+                self.max_moves_name[move.name] = len(self.max_moves) - 1
         elif "isZ" in move_dict:
             move._type = "zmove"
             self.zmoves.append(move)
-            self.zmoves_name[move.name] = len(self.zmoves) - 1
+            if used:
+                self.zmoves_name[move.name] = len(self.zmoves) - 1
+                self.can_z = False
         else:
             self.moves.append(move)
-            self.moves_name[move.name] = len(self.moves) - 1
+            if used:
+                self.moves_name[move.name] = len(self.moves) - 1
