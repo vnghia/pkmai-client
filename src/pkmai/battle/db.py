@@ -8,11 +8,14 @@ def read_json_from_pkm_server(url: str) -> Dict:
     return resp.json()
 
 
-class MoveDB:
-    db_id: Dict = read_json_from_pkm_server(
-        "https://play.pokemonshowdown.com/data/moves.json"
-    )
-    db_name: Dict = {move["name"]: dict(id=id, **move) for id, move in db_id.items()}
+class DB(type):
+    def __init__(cls, name, bases, attrs):
+        url = attrs["url"]
+        cls.db_id: Dict = read_json_from_pkm_server(url)
+        cls.db_name: Dict = {
+            move["name"]: dict(id=id, **move) for id, move in cls.db_id.items()
+        }
+        super().__init__(name, bases, attrs)
 
     @classmethod
     def to_id(cls, name_or_id: str) -> str:
@@ -27,3 +30,11 @@ class MoveDB:
             return name_or_id
         else:
             return cls.db_id[name_or_id]["name"]
+
+
+class MoveDB(metaclass=DB):
+    url = "https://play.pokemonshowdown.com/data/moves.json"
+
+
+class PokemonDB(metaclass=DB):
+    url = "https://play.pokemonshowdown.com/data/pokedex.json"
