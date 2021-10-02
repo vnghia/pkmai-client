@@ -71,10 +71,10 @@ class Battle(Chat):
     def listener_turn(self, msg: List[str]):
         turn = int(msg[0])
         if turn == 1:
-            self.states[-1].pokemons.update(self.requests[0].pokemons)
-            self.states[-1].positions.extend(self.requests[0].positions)
             self.is_good.set()
-        self.states.append(State(positions=None))
+            self.states.append(State(positions=None))
+        else:
+            self.states.append(self.states[-1].copy())
 
     def listener_request(self, msg: List[str]):
         if msg[0]:
