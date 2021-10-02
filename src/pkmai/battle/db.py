@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 from typing import Dict
+
 import requests
+from pkmai.utils.string import to_id
 
 
 def read_json_from_pkm_server(url: str) -> Dict:
@@ -12,24 +16,16 @@ class DB(type):
     def __init__(cls, name, bases, attrs):
         url = attrs["url"]
         cls.db_id: Dict = read_json_from_pkm_server(url)
-        cls.db_name: Dict = {
-            move["name"]: dict(id=id, **move) for id, move in cls.db_id.items()
-        }
         super().__init__(name, bases, attrs)
 
     @classmethod
     def to_id(cls, name_or_id: str) -> str:
-        if name_or_id in cls.db_id:
-            return name_or_id
-        else:
-            return cls.db_name[name_or_id]["id"]
+        return to_id(name_or_id)
 
     @classmethod
-    def to_name(cls, name_or_id: str) -> str:
-        if name_or_id in cls.db_name:
-            return name_or_id
-        else:
-            return cls.db_id[name_or_id]["name"]
+    def item(cls, name_or_id: str) -> Dict:
+        id = to_id(name_or_id)
+        return cls.db_id[id]
 
 
 class MoveDB(metaclass=DB):

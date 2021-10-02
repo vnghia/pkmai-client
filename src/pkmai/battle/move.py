@@ -8,6 +8,7 @@ from pkmai.battle.db import MoveDB
 
 @dataclass
 class Move:
+    name_or_id: InitVar[str]
     id: str = ""
     name: str = ""
     accuracy: int | Literal[True] = 0
@@ -34,26 +35,22 @@ class Move:
     type: Literal["normal", "max", "z"] = "normal"
     disable: bool = False
 
-    init_by_name: InitVar[bool] = False
     data_from_dict: InitVar[bool] = True
     move_dict: InitVar[Dict[str, Any]] = None
 
     def __post_init__(
         self,
-        init_by_name: bool = False,
+        name_or_id: str,
         data_from_dict: bool = True,
         move_dict: Dict[str, Any] = None,
     ):
         if data_from_dict:
-            self.load_from_dict(self, init_by_name, move_dict)
+            self.load_from_dict(self, name_or_id, move_dict)
 
     @staticmethod
-    def load_from_dict(
-        move: Move, init_by_name: bool = False, move_dict: Dict[str, Any] = None
-    ):
-        move_dict = move_dict or (
-            MoveDB.db_id[move.id] if not init_by_name else MoveDB.db_name[move.name]
-        )
+    def load_from_dict(move: Move, name_or_id: str, move_dict: Dict[str, Any] = None):
+        move_dict = move_dict or MoveDB.item(name_or_id)
+
         move.id = move.id or move_dict["id"]
         move.name = move.name or move_dict["name"]
         move.accuracy = move.accuracy or move_dict["accuracy"]

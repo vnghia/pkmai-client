@@ -40,7 +40,7 @@ class Moveset:
     ):
         _, _, move = self.__index(name, mtype)
         if not move:
-            move = Move(name, init_by_name=True)
+            move = Move(name)
             self.moves[move.type].append(move)
 
     def move_from_request(
@@ -62,7 +62,7 @@ class Moveset:
                 continue
             _, index, move = self.__index(move_dict["move"], mtype)
             if not index or not move:
-                move = Move(move_dict["move"], init_by_name=(mtype != "max"))
+                move = Move(move_dict["move"])
                 self.moves[move.type].append(move)
                 index = len(self.moves) - 1
             if "pp" in move_dict:
