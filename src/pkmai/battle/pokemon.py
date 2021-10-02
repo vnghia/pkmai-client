@@ -202,7 +202,7 @@ class Pokemon:
 
         moveset = MoveSet()
         for move in pokemon_dict["moves"]:
-            moveset.add(move, used=False)
+            moveset.add_used_move(move, used=False)
 
         return cls(
             player_id,

@@ -245,34 +245,42 @@ class MoveSet:
         clone._can_z = self._can_z
         return clone
 
-    def add(self, name, used=True):
-        if name in self.moves_name:
-            self.moves[self.moves_name[name]].pp -= 1
-            if name in self._moves_to_max_moves:
-                index = self.max_moves_name[self._moves_to_max_moves[name]]
-                self.max_moves[index].pp -= 1
-        elif name in self.max_moves_name:
-            self.max_moves[self.max_moves_name[name]].pp -= 1
-            if name in self._max_moves_to_moves:
-                index = self.moves_name[self._max_moves_to_moves[name]]
-                self.moves[index].pp -= 1
-        elif name in self.zmoves_name:
-            self.zmoves[self.zmoves_name[name]].pp -= 1
-            self.can_z = False
-        move_dict: Dict = MoveDB.db_name.get[name]
-        move = Move(move_dict["id"], name, move_dict["pp"], move_dict["target"])
+    # ----------------------------------- Move ----------------------------------- #
+
+    @staticmethod
+    def move_from_name_or_id(name_or_id: str) -> Move:
+        id = MoveDB.to_id(name_or_id)
+        move_dict: Dict = MoveDB.db_id[id]
+        move = Move(id, move_dict["name"], move_dict["pp"], move_dict["target"])
         if "isMax" in move_dict:
             move._type = "max"
-            self.max_moves.append(move)
-            if used:
-                self.max_moves_name[move.name] = len(self.max_moves) - 1
         elif "isZ" in move_dict:
             move._type = "zmove"
-            self.zmoves.append(move)
-            if used:
-                self.zmoves_name[move.name] = len(self.zmoves) - 1
+        return move
+
+    def add_move(self, name: str, move: Move = None, used=True):
+        if used:
+            if name in self.moves_name:
+                self.moves[self.moves_name[name]].pp -= 1
+                if name in self._moves_to_max_moves:
+                    index = self.max_moves_name[self._moves_to_max_moves[name]]
+                    self.max_moves[index].pp -= 1
+            elif name in self.max_moves_name:
+                self.max_moves[self.max_moves_name[name]].pp -= 1
+                if name in self._max_moves_to_moves:
+                    index = self.moves_name[self._max_moves_to_moves[name]]
+                    self.moves[index].pp -= 1
+            elif name in self.zmoves_name:
+                self.zmoves[self.zmoves_name[name]].pp -= 1
                 self.can_z = False
+        move = move or self.move_from_name_or_id(name)
+        if move.type == "max":
+            self.max_moves.append(move)
+            self.max_moves_name[move.name] = len(self.max_moves) - 1
+        if move.type == "zmove":
+            self.zmoves.append(move)
+            self.zmoves_name[move.name] = len(self.zmoves) - 1
+            self.can_z = False
         else:
             self.moves.append(move)
-            if used:
-                self.moves_name[move.name] = len(self.moves) - 1
+            self.moves_name[move.name] = len(self.moves) - 1
