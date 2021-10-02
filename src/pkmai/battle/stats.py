@@ -1,152 +1,50 @@
 from __future__ import annotations
 
-from typing import Dict
+from dataclasses import dataclass
+from typing import ClassVar, Dict
 
 
+@dataclass
 class Stats:
-    def __init__(
-        self, atk: int = 0, def_: int = 0, spa: int = 0, spd: int = 0, spe: int = 0
-    ) -> None:
-        self._atk = atk
-        self._def = def_
-        self._spa = spa
-        self._spd = spd
-        self._spe = spe
-        self._boost_atk = 1.0
-        self._boost_def = 1.0
-        self._boost_spa = 1.0
-        self._boost_spd = 1.0
-        self._boost_spe = 1.0
+    boost_ratio: ClassVar[Dict[int, float]] = {
+        -6: 1 / 4,
+        -5: 1 / 3.5,
+        -4: 1 / 3,
+        -3: 1 / 2.5,
+        -2: 1 / 2,
+        -1: 1 / 1.5,
+        0: 1.0,
+        1: 1.5,
+        2: 2,
+        3: 2.5,
+        4: 3,
+        5: 3.5,
+        6: 4,
+    }
+    atk_: int = 0
+    def_: int = 0
+    spa_: int = 0
+    spd_: int = 0
+    spe_: int = 0
+    boost_atk: int = 1
+    boost_def: int = 1
+    boost_spa: int = 1
+    boost_spd: int = 1
+    boost_spe: int = 1
 
-    @property
-    def atk(self) -> int:
-        if not self._atk:
-            raise ValueError("atk is empty")
-        return int(self._atk * self._boost_atk)
-
-    @atk.setter
-    def atk(self, atk: int):
-        self._boost_atk = atk / self._atk
-
-    @property
-    def def_(self) -> int:
-        if not self._def:
-            raise ValueError("def is empty")
-        return int(self._def * self._boost_def)
-
-    @def_.setter
-    def def_(self, def_: int):
-        self._boost_def = def_ / self._def
-
-    @property
-    def spa(self) -> int:
-        if not self._spa:
-            raise ValueError("spa is empty")
-        return int(self._spa * self._boost_spa)
-
-    @spa.setter
-    def spa(self, spa: int):
-        self._boost_spa = spa / self._spa
-
-    @property
-    def spd(self) -> int:
-        if not self._spd:
-            raise ValueError("spd is empty")
-        return int(self._spd * self._boost_spd)
-
-    @spd.setter
-    def spd(self, spd: int):
-        self._boost_spd = spd / self._spd
-
-    @property
-    def spe(self) -> int:
-        if not self._spe:
-            raise ValueError("spe is empty")
-        return int(self._spe * self._boost_spe)
-
-    @spe.setter
-    def spe(self, spe: int):
-        self._boost_spe = spe / self._spe
-
-    @property
-    def boost_atk(self) -> float:
-        return self._boost_atk
-
-    @boost_atk.setter
-    def boost_atk(self, coff: float):
-        self._boost_atk = coff
-
-    @property
-    def boost_def(self) -> float:
-        return self._boost_def
-
-    @boost_def.setter
-    def boost_def(self, coff: float):
-        self._boost_def = coff
-
-    @property
-    def boost_spa(self) -> float:
-        return self._boost_spa
-
-    @boost_spa.setter
-    def boost_spa(self, coff: float):
-        self._boost_spa = coff
-
-    @property
-    def boost_spd(self) -> float:
-        return self._boost_spd
-
-    @boost_spd.setter
-    def boost_spd(self, coff: float):
-        self._boost_spd = coff
-
-    @property
-    def boost_spe(self) -> float:
-        return self._boost_spe
-
-    @boost_spe.setter
-    def boost_spe(self, coff: float):
-        self._boost_spe = coff
-
-    @classmethod
-    def create_from_request(cls, stats_dict: Dict) -> Stats:
-        return cls(
-            stats_dict["atk"],
-            stats_dict["def"],
-            stats_dict["spa"],
-            stats_dict["spd"],
-            stats_dict["spe"],
+    def read(self, key: str) -> int:
+        return int(
+            self.__dict__[f"{key}_"] * self.boost_ratio[self.__dict__[f"boost_{key}"]]
         )
 
-    # ---------------------------------- String ---------------------------------- #
+    def boost(self, key: str, stage: int):
+        self.__dict__[f"boost_{key}"] += stage
 
-    def __repr__(self) -> str:
-        return f"({hex(id(self))}) {self}"
+    def reset(self):
+        for key in ["atk", "def", "spa", "spd", "spe"]:
+            self.__dict__[f"boost_{key}"] = 1
 
-    def __str__(self) -> str:
-        return f"atk: {self.atk}, def: {self.def_}, spa: {self.spa}, spd: {self.spd}, spe: {self.spa}"
-
-    # ----------------------------------- Copy ----------------------------------- #
-
-    def clone(self) -> Stats:
-        clone = Stats(self.atk, self.def_, self.spa, self.spd, self.spe)
-        clone._boost_atk = self._boost_atk
-        clone._boost_def = self._boost_def
-        clone._boost_spa = self._boost_spa
-        clone._boost_spd = self._boost_spd
-        clone._boost_spe = self._boost_spe
-        return clone
-
-    # ---------------------------------- Request --------------------------------- #
-
-    def update_from_request(self, stats_dict: Dict):
-        if self.atk != stats_dict["atk"]:
-            self.atk = int(stats_dict["atk"])
-        if self.def_ != stats_dict["def"]:
-            self.def_ = int(stats_dict["def"])
-        if self.spa != stats_dict["spa"]:
-            self.spa = int(stats_dict["spa"])
-        if self.spd != stats_dict["spd"]:
-            self.spd = int(stats_dict["spd"])
-        if self.spe != stats_dict["spe"]:
-            self.spe = int(stats_dict["spe"])
+    def stats_from_request(self, stats_dict: Dict):
+        self.reset()
+        for key, value in stats_dict:
+            self.__dict__[f"{key}_"] = value
