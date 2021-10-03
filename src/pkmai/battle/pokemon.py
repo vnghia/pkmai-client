@@ -1,165 +1,26 @@
 from __future__ import annotations
 
-from typing import Dict, Literal, Tuple
+from dataclasses import InitVar, dataclass, field
+from typing import Any, Dict, List, Literal, Tuple
 
-from pkmai.battle.move import MoveSet
+from pkmai.battle.db import PokemonDB
+from pkmai.battle.moveset import Moveset
 from pkmai.battle.stats import Stats
 
 
-class Pokemon:
-    def __init__(
-        self,
-        player_id: str,
-        name: str,
-        species: str,
-        level: int,
-        gender: Literal["M", "F", ""],
-        total_hp: int,
-        stats: Stats = None,
-        moveset: MoveSet = None,
-        base_ability: str = "",
-        item: str = "",
-    ) -> None:
-        self._player_id = player_id
-        self._name = name
-        self._species = species
-        self._level = level
-        self._gender = gender
-        self._hp = total_hp
-        self._total_hp = total_hp
-        self._stats = stats or Stats()
-        self._status = ""
-        self._moveset = moveset or MoveSet()
-        self._ability = base_ability
-        self._base_ability = base_ability
-        self._item = item
-        self._state: Literal["", "mega", "max"] = ""
-        self._can_mega = False
-
-    @property
-    def player_id(self) -> str:
-        return self._player_id
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def species(self) -> str:
-        return self._species
-
-    @property
-    def level(self) -> int:
-        return self._level
-
-    @property
-    def gender(self) -> Literal["M", "F", ""]:
-        return self._gender
-
-    @property
-    def hp(self) -> int:
-        return self._hp
-
-    @hp.setter
-    def hp(self, hp: int):
-        self._hp = hp
-
-    @property
-    def total_hp(self) -> int:
-        return self._total_hp
-
-    @property
-    def stats(self) -> Stats:
-        return self._stats
-
-    @property
-    def status(self) -> str:
-        return self._status
-
-    @status.setter
-    def status(self, status: str):
-        self._status = status
-
-    @property
-    def moveset(self) -> MoveSet:
-        return self._moveset
-
-    @property
-    def ability(self) -> str:
-        return self._ability
-
-    @ability.setter
-    def ability(self, ability: str):
-        self._ability = ability
-
-    @property
-    def base_ability(self) -> str:
-        return self._base_ability
-
-    @property
-    def item(self) -> str:
-        return self._item
-
-    @item.setter
-    def item(self, item: str):
-        self._item = item
-
-    @property
-    def state(self) -> Literal["", "mega", "max"]:
-        return self._state
-
-    @state.setter
-    def state(self, state: Literal["", "mega", "max"]):
-        self._state = state
-        self._moveset.max = state == "max"
-
-    @property
-    def can_mega(self) -> bool:
-        return self._can_mega
-
-    # ---------------------------------- String ---------------------------------- #
-
-    def __repr__(self) -> str:
-        return f"({hex(id(self))}) {self}"
-
-    def __str__(self) -> str:
-        return f"{self.name}, {self.species}, {self.level}\n{self.moveset}"
-
-    # ----------------------------------- Copy ----------------------------------- #
-
-    def clone(self) -> Pokemon:
-        clone = Pokemon(
-            self._player_id,
-            self._name,
-            self._species,
-            self._level,
-            self._gender,
-            self._total_hp,
-            self._stats.clone(),
-            self._moveset.clone(),
-            self._base_ability,
-            self._item,
-        )
-        clone._status = self._status
-        clone._ability = self._ability
-        clone._state = self._state
-        clone._can_mega = self._can_mega
-        return clone
-
-    # ---------------------------------- Parsing --------------------------------- #
-
-    @staticmethod
-    def parse_ident(ident: str) -> Tuple[str, str]:
+class PokemonParser:
+    @classmethod
+    def parse_ident(cls, ident: str) -> Tuple[str, str]:
         player_id, name = ident.split(": ", maxsplit=1)
         return player_id, name
 
-    @staticmethod
-    def parse_active_ident(ident: str) -> Tuple[str, str, str]:
-        res, name = Pokemon.parse_ident(ident)
+    @classmethod
+    def parse_active_ident(cls, ident: str) -> Tuple[str, str, str]:
+        res, name = cls.parse_ident(ident)
         return res[:-1], res[-1], name
 
-    @staticmethod
-    def parse_detail(detail: str) -> Tuple[str, Literal["M", "F", ""], int]:
+    @classmethod
+    def parse_detail(cls, detail: str) -> Tuple[str, Literal["M", "F", ""], int]:
         details = detail.split(", ")
         species = details[0]
         gender: Literal["M", "F", ""] = ""
@@ -173,8 +34,8 @@ class Pokemon:
                 level = int(detail[1:])
         return species, gender, level
 
-    @staticmethod
-    def parse_condition(condition: str) -> Tuple[int, int, str]:
+    @classmethod
+    def parse_condition(cls, condition: str) -> Tuple[int, int, str]:
         conditions = condition.split(" ")
         hps = conditions[0].split("/")
         if len(hps) == 2:
@@ -187,32 +48,78 @@ class Pokemon:
             status = ""
         return hp, total_hp, status
 
-    # ---------------------------------- Request --------------------------------- #
 
-    @classmethod
-    def create_from_request(cls, pokemon_dict: Dict) -> Pokemon:
-        ident = pokemon_dict["ident"]
-        player_id, name = cls.parse_ident(ident)
-        species, gender, level = cls.parse_detail(pokemon_dict["details"])
-        _, total_hp, _ = cls.parse_condition(pokemon_dict["condition"])
+@dataclass
+class Pokemon:
+    name_or_id: InitVar[str]
+    id: str = ""
+    name: str = ""
+    nickname: str = ""
+    level: int = 100
+    gender: Literal["M", "F", ""] = ""
+    types: List[str] = field(default_factory=list)
+    current_hp: int = 100
+    total_hp: int = 100
+    status: str = ""
+    stats: Stats = field(default_factory=Stats)
+    moveset: Moveset = field(default_factory=Moveset)
+    ability: str = ""
+    base_ability: str = ""
+    item: str = ""
 
-        stat_table = Stats.create_from_request(pokemon_dict["stats"])
-        base_ability = pokemon_dict["baseAbility"]
-        item = pokemon_dict["item"]
+    need_additional: InitVar[bool] = True
+    pokemon_db: InitVar[Dict[str, Any]] = None
+    pokemon_request: InitVar[Dict[str, Any]] = None
 
-        moveset = MoveSet()
-        for move in pokemon_dict["moves"]:
-            moveset.add_used_move(move, used=False)
+    def __post_init__(
+        self,
+        name_or_id: str,
+        need_additional: bool = True,
+        pokemon_db: Dict[str, Any] = None,
+        pokemon_request: Dict[str, Any] = None,
+    ):
+        if need_additional:
+            self.load_additional(name_or_id, pokemon_db, pokemon_request)
 
-        return cls(
-            player_id,
-            name,
-            species,
-            level,
-            gender,
-            total_hp,
-            stat_table,
-            moveset,
-            base_ability,
-            item,
+    def load_additional(
+        self,
+        name_or_id: str,
+        pokemon_db: Dict[str, Any] = None,
+        pokemon_request: Dict[str, Any] = None,
+    ):
+        pokemon_db = pokemon_db or PokemonDB.item(name_or_id)
+
+        self.id = self.id or PokemonDB.to_id(name_or_id)
+        self.name = self.name or pokemon_db["name"]
+        self.types = self.types or pokemon_db["types"]
+
+        if pokemon_request:
+            self.init_from_request(pokemon_request)
+
+    def init_from_request(self, pokemon_request: Dict[str, Any]):
+        _, nickname = PokemonParser.parse_ident(pokemon_request["ident"])
+        self.nickname = nickname
+
+        current_hp, total_hp, status = PokemonParser.parse_condition(
+            pokemon_request["condition"]
         )
+        self.current_hp = current_hp
+        self.total_hp = total_hp
+        self.status = status
+
+        self.stats.stats_from_request(pokemon_request["stats"])
+        self.moveset.move_from_request(pokemon_request["moves"])
+
+        self.base_ability = pokemon_request["baseAbility"]
+        self.ability = pokemon_request["ability"]
+        self.item = pokemon_request["item"]
+
+    def pokemon_from_request(self, pokemon_request: Dict[str, Any]):
+        current_hp, _, status = PokemonParser.parse_condition(
+            pokemon_request["condition"]
+        )
+        self.current_hp = current_hp
+        self.status = status
+
+        self.ability = pokemon_request["ability"]
+        self.item = pokemon_request["item"]
