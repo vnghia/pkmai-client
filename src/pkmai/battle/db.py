@@ -18,11 +18,9 @@ class DB(type):
         cls.db_id: Dict = read_json_from_pkm_server(url)
         super().__init__(name, bases, attrs)
 
-    @classmethod
     def to_id(cls, name_or_id: str) -> str:
         return to_id(name_or_id)
 
-    @classmethod
     def item(cls, name_or_id: str) -> Dict:
         id = to_id(name_or_id)
         return cls.db_id[id]
