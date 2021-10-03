@@ -66,6 +66,7 @@ class Pokemon:
     ability: str = ""
     base_ability: str = ""
     item: str = ""
+    can_mega: bool = False
 
     need_additional: InitVar[bool] = True
     pokemon_db: InitVar[Dict[str, Any]] = None
@@ -100,8 +101,7 @@ class Pokemon:
         _, nickname = PokemonParser.parse_ident(pokemon_request["ident"])
         self.nickname = nickname
 
-        name, gender, level = PokemonParser.parse_detail(pokemon_request["details"])
-        self.name = name
+        _, gender, level = PokemonParser.parse_detail(pokemon_request["details"])
         self.gender = gender
         self.level = level
 
@@ -128,3 +128,15 @@ class Pokemon:
 
         self.ability = pokemon_request["ability"]
         self.item = pokemon_request["item"]
+
+    def active_from_request(self, active_request: Dict[str, Any]) -> Tuple[bool, bool]:
+        self.can_mega == "canMegaEvo" in active_request
+        can_max = "canDynamax" in active_request
+        can_z = "canZMove" in active_request
+        if "maxMoves" in active_request:
+            self.moveset.move_from_request(active_request["maxMoves"]["maxMoves"])
+        if can_z:
+            self.moveset.move_from_request(active_request["canZMove"])
+            can_z = True
+        self.moveset.move_from_request(active_request["moves"])
+        return can_max, can_z
