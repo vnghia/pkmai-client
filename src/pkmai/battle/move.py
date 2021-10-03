@@ -45,22 +45,21 @@ class Move:
         move_db: Dict[str, Any] = None,
     ):
         if need_additional:
-            self.load_additional(self, name_or_id, move_db)
+            self.load_additional(name_or_id, move_db)
 
-    @staticmethod
-    def load_additional(move: Move, name_or_id: str, move_db: Dict[str, Any] = None):
+    def load_additional(self, name_or_id: str, move_db: Dict[str, Any] = None):
         move_db = move_db or MoveDB.item(name_or_id)
 
-        move.id = move.id or MoveDB.to_id(name_or_id)
-        move.name = move.name or move_db["name"]
-        move.accuracy = move.accuracy or move_db["accuracy"]
-        move.base_power = move.base_power or move_db["basePower"]
-        move.maxpp = move.maxpp or move_db["pp"]
-        move.pp = move.maxpp
-        move.target = move.target or move_db["target"]
+        self.id = self.id or MoveDB.to_id(name_or_id)
+        self.name = self.name or move_db["name"]
+        self.accuracy = self.accuracy or move_db["accuracy"]
+        self.base_power = self.base_power or move_db["basePower"]
+        self.maxpp = self.maxpp or move_db["pp"]
+        self.pp = self.maxpp
+        self.target = self.target or move_db["target"]
         if "isZ" in move_db:
-            move.type = "z"
+            self.type = "z"
         elif "isMax" in move_db:
-            move.type = "max"
+            self.type = "max"
         else:
-            move.type = "normal"
+            self.type = "normal"
