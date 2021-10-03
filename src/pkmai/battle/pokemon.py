@@ -4,6 +4,7 @@ from dataclasses import InitVar, dataclass, field
 from typing import Any, Dict, List, Literal, Tuple
 
 from pkmai.battle.db import PokemonDB
+from pkmai.battle.move import Move
 from pkmai.battle.moveset import Moveset
 from pkmai.battle.stats import Stats
 
@@ -131,3 +132,8 @@ class Pokemon:
     def update_attr_from_active_request(self, active_request: Dict[str, Any]):
         self.can_mega == "canMegaEvo" in active_request
         self.moveset.init_all_move_types_from_active_request(active_request)
+
+    # ---------------------------------- Choose ---------------------------------- #
+
+    def list_all_possible_choices(self) -> Dict[str, Move]:
+        return self.moveset.list_all_possible_choices(self.can_mega)

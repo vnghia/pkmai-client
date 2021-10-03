@@ -118,3 +118,38 @@ class Moveset:
     def init_normal_move_from_move_list_request(cls, move_list_request: List[str]):
         normal_moves: List[Move] = [Move(id) for id in move_list_request]
         return cls(MovesData(normal=normal_moves))
+
+    # ---------------------------------- Choose ---------------------------------- #
+
+    def list_all_possible_choices(self, can_mega: bool = False) -> Dict[str, Move]:
+        chooses: Dict[str, Move] = {}
+        current_set: Literal["normal", "max"] = "max" if self.is_max else "normal"
+        chooses.update(
+            {
+                f"move {index + 1}": move
+                for index, move in enumerate(self.moves[current_set])
+            }
+        )
+        if can_mega:
+            chooses.update(
+                {
+                    f"move {index + 1} mega": move
+                    for index, move in enumerate(self.moves[current_set])
+                }
+            )
+        if self.can_max:
+            chooses.update(
+                {
+                    f"move {index + 1} max": move
+                    for index, move in enumerate(self.moves["max"])
+                }
+            )
+        if self.can_z:
+            chooses.update(
+                {
+                    f"move {index + 1} zmove": move
+                    for index, move in enumerate(self.moves["z"])
+                    if move
+                }
+            )
+        return chooses

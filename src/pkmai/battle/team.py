@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import InitVar, dataclass, field
 from typing import Any, Dict, List, Tuple
 
+from pkmai.battle.move import Move
 from pkmai.battle.pokemon import Pokemon, PokemonParser
 
 
@@ -56,3 +57,17 @@ class Team:
                 actives.append(index)
                 pokemons[index].update_attr_from_active_request(active_request)
         return cls(pokemons=pokemons)
+
+    # ---------------------------------- Choose ---------------------------------- #
+
+    def list_all_possible_choices(self) -> Dict[str, Pokemon | Move]:
+        choices: Dict[str, Pokemon | Move] = {}
+        choices.update(
+            {
+                f"switch {index + 1 + len(self.actives)}": pokemon
+                for index, pokemon in enumerate(self.pokemons[len(self.actives) :])
+            }
+        )
+        for pokemon in self.pokemons:
+            choices.update(pokemon.list_all_possible_choices())
+        return choices
