@@ -1,8 +1,7 @@
 import json
 from typing import Dict, List
 
-from pkmai.battle.request import Request
-from pkmai.battle.state import State
+from pkmai.battle.team import Team
 from pkmai.room.chat import Chat
 from pkmai.room.room import compute_all_listeners
 from pkmai.utils.type import GlobalData, PlayerData
@@ -22,10 +21,9 @@ class Battle(Chat):
             conn, data, room_id, debug=debug, logs=logs, custom_good_event=True
         )
         self.players: Dict[str, PlayerData] = {}
+        self.teams: Dict[str, Team] = {}
         self.rules: Dict[str, str] = {}
         self.listeners.update(compute_all_listeners(self))
-        self.requests: List[Request] = []
-        self.states: List[State] = [State(positions=None)]
 
     # -------------------------------- User Method ------------------------------- #
 
@@ -72,11 +70,10 @@ class Battle(Chat):
         turn = int(msg[0])
         if turn == 1:
             self.is_good.set()
-            self.states.append(State(positions=None))
-        else:
-            self.states.append(self.states[-1].copy())
 
     def listener_request(self, msg: List[str]):
         if msg[0]:
             raw = json.loads(msg[0])
-            self.requests.append(Request.create(raw))
+            team = Team()
+            team.pokemon_from_request(raw)
+            self.teams[self.self_id] = team
