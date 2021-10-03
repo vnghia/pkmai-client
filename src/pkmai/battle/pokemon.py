@@ -113,7 +113,9 @@ class Pokemon:
         self.status = status
 
         self.stats.stats_from_request(pokemon_request["stats"])
-        self.moveset.move_from_request(pokemon_request["moves"])
+        self.moveset = Moveset.init_normal_move_from_move_list_request(
+            pokemon_request["moves"]
+        )
 
         self.base_ability = pokemon_request["baseAbility"]
         self.ability = pokemon_request["ability"]
@@ -131,12 +133,4 @@ class Pokemon:
 
     def active_from_request(self, active_request: Dict[str, Any]) -> Tuple[bool, bool]:
         self.can_mega == "canMegaEvo" in active_request
-        can_max = "canDynamax" in active_request
-        can_z = "canZMove" in active_request
-        if "maxMoves" in active_request:
-            self.moveset.move_from_request(active_request["maxMoves"]["maxMoves"])
-        if can_z:
-            self.moveset.move_from_request(active_request["canZMove"])
-            can_z = True
-        self.moveset.move_from_request(active_request["moves"])
-        return can_max, can_z
+        return self.moveset.init_all_move_types_from_active_request(active_request)
