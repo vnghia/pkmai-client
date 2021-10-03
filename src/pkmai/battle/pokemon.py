@@ -100,6 +100,11 @@ class Pokemon:
         _, nickname = PokemonParser.parse_ident(pokemon_request["ident"])
         self.nickname = nickname
 
+        name, gender, level = PokemonParser.parse_detail(pokemon_request["details"])
+        self.name = name
+        self.gender = gender
+        self.level = level
+
         current_hp, total_hp, status = PokemonParser.parse_condition(
             pokemon_request["condition"]
         )
