@@ -18,19 +18,19 @@ class Moveset:
 
     def __index(
         self, name: str, mtype: Literal["normal", "max", "z"] | None = None
-    ) -> Tuple[str, int, Move] | Tuple[None, None, None]:
+    ) -> Tuple[int, Move] | Tuple[None, None]:
         mtypes = [mtype] if mtype else ["normal", "max", "z"]
         for type in mtypes:
             if type in self.moves:
                 for index, move in enumerate(self.moves[type]):
                     if move and move.name == name:
-                        return (name, index, move)
-        return None, None, None
+                        return (index, move)
+        return None, None
 
     def move_from_recv(
         self, name: str, mtype: Literal["normal", "max", "z"] | None = None
     ):
-        _, _, move = self.__index(name, mtype)
+        _, move = self.__index(name, mtype)
         if not move:
             move = Move(name)
             self.moves[move.type].append(move)
@@ -43,7 +43,7 @@ class Moveset:
             move_dict: Dict[str, Any] = (
                 {"move": move_data} if isinstance(move_data, str) else move_data
             )
-            _, index, move = self.__index(move_dict["move"])
+            index, move = self.__index(move_dict["move"])
             if not index or not move:
                 move = Move(move_dict["move"])
                 if move.type not in self.moves:
