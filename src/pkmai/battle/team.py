@@ -8,11 +8,11 @@ from pkmai.battle.pokemon import Pokemon, PokemonParser
 
 @dataclass
 class Team:
-    active_size: InitVar[int]
+    active_size: InitVar[int] = 1
     actives: List[int] = field(default_factory=list)
     pokemons: List[Pokemon] = field(default_factory=list)
 
-    def __post_init__(self, active_size: int):
+    def __post_init__(self, active_size: int = 1):
         self.actives = self.actives or [-1] * active_size
 
     def __index(self, name: str) -> Tuple[int, Pokemon] | Tuple[None, None]:
@@ -22,7 +22,11 @@ class Team:
                     return (index, pokemon)
         return None, None
 
-    def pokemon_from_recv(self, pos: str, nickname: str, detail: str, condition: str):
+    # ---------------------------------- Message --------------------------------- #
+
+    def add_other_player_pokemon_from_message(
+        self, pos: str, nickname: str, detail: str, condition: str
+    ):
         name, gender, level = PokemonParser.parse_detail(detail)
         index, pokemon = self.__index(name)
         if not index or not pokemon:
@@ -38,15 +42,17 @@ class Team:
         pokemon.status = status
         self.actives[ord(pos) - ord("a")] = index
 
+    # ---------------------------------- Request --------------------------------- #
+
     @classmethod
-    def from_request(cls, pokemon_request: Dict[str, Any]) -> Team:
-        pokemons: List[Pokemon] = []
+    def init_from_request(cls, request: Dict[str, Any]) -> Team:
+        pokemons: List[Pokemon] = [
+            Pokemon.init_from_pokemon_request(pokemon_request)
+            for pokemon_request in request["side"]["pokemon"]
+        ]
         actives: List[int] = []
-        for index, pokemon_dict in enumerate(pokemon_request["side"]["pokemon"]):
-            name, _, _ = PokemonParser.parse_detail(pokemon_dict["details"])
-            pokemon = Pokemon(name, pokemon_request=pokemon_dict)
-            pokemons.append(pokemon)
-            if pokemon_dict["active"]:
+        if "active" in request:
+            for index, active_request in enumerate(request["active"]):
                 actives.append(index)
-                pokemon.active_from_request(pokemon_request["active"][len(actives) - 1])
-        return cls(len(actives), actives, pokemons)
+                pokemons[index].update_attr_from_active_request(active_request)
+        return cls(pokemons=pokemons)

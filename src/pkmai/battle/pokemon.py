@@ -70,23 +70,20 @@ class Pokemon:
 
     need_additional: InitVar[bool] = True
     pokemon_db: InitVar[Dict[str, Any]] = None
-    pokemon_request: InitVar[Dict[str, Any]] = None
 
     def __post_init__(
         self,
         name_or_id: str,
         need_additional: bool = True,
         pokemon_db: Dict[str, Any] = None,
-        pokemon_request: Dict[str, Any] = None,
     ):
         if need_additional:
-            self.load_additional(name_or_id, pokemon_db, pokemon_request)
+            self.load_additional(name_or_id, pokemon_db)
 
     def load_additional(
         self,
         name_or_id: str,
         pokemon_db: Dict[str, Any] = None,
-        pokemon_request: Dict[str, Any] = None,
     ):
         pokemon_db = pokemon_db or PokemonDB.item(name_or_id)
 
@@ -94,43 +91,45 @@ class Pokemon:
         self.name = self.name or pokemon_db["name"]
         self.types = self.types or pokemon_db["types"]
 
-        if pokemon_request:
-            self.init_from_request(pokemon_request)
+    # ---------------------------------- Request --------------------------------- #
 
-    def init_from_request(self, pokemon_request: Dict[str, Any]):
+    @classmethod
+    def init_from_pokemon_request(cls, pokemon_request: Dict[str, Any]) -> Pokemon:
         _, nickname = PokemonParser.parse_ident(pokemon_request["ident"])
-        self.nickname = nickname
-
-        _, gender, level = PokemonParser.parse_detail(pokemon_request["details"])
-        self.gender = gender
-        self.level = level
-
+        name, gender, level = PokemonParser.parse_detail(pokemon_request["details"])
         current_hp, total_hp, status = PokemonParser.parse_condition(
             pokemon_request["condition"]
         )
-        self.current_hp = current_hp
-        self.total_hp = total_hp
-        self.status = status
 
-        self.stats.stats_from_request(pokemon_request["stats"])
-        self.moveset = Moveset.init_normal_move_from_move_list_request(
+        stats = Stats.init_from_stats_request(pokemon_request["stats"])
+        moveset = Moveset.init_normal_move_from_move_list_request(
             pokemon_request["moves"]
         )
 
-        self.base_ability = pokemon_request["baseAbility"]
-        self.ability = pokemon_request["ability"]
-        self.item = pokemon_request["item"]
+        ability = pokemon_request["ability"]
+        base_ability = pokemon_request["baseAbility"]
+        item = pokemon_request["item"]
 
-    def pokemon_from_request(self, pokemon_request: Dict[str, Any]):
-        current_hp, _, status = PokemonParser.parse_condition(
-            pokemon_request["condition"]
+        return cls(
+            name,
+            "",
+            name,
+            nickname,
+            level,
+            gender,
+            [],
+            current_hp,
+            total_hp,
+            status,
+            stats,
+            moveset,
+            ability,
+            base_ability,
+            item,
         )
-        self.current_hp = current_hp
-        self.status = status
 
-        self.ability = pokemon_request["ability"]
-        self.item = pokemon_request["item"]
-
-    def active_from_request(self, active_request: Dict[str, Any]) -> Tuple[bool, bool]:
+    def update_attr_from_active_request(
+        self, active_request: Dict[str, Any]
+    ) -> Tuple[bool, bool]:
         self.can_mega == "canMegaEvo" in active_request
         return self.moveset.init_all_move_types_from_active_request(active_request)

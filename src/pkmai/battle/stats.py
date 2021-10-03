@@ -44,7 +44,6 @@ class Stats:
         for key in ["atk", "def", "spa", "spd", "spe"]:
             self.__dict__[f"boost_{key}"] = 1
 
-    def stats_from_request(self, stats_dict: Dict[str, int]):
-        self.reset()
-        for key, value in stats_dict.items():
-            self.__dict__[f"{key}_"] = value
+    @classmethod
+    def init_from_stats_request(cls, stats_request: Dict[str, int]) -> Stats:
+        return cls(**{f"{key}_": value for key, value in stats_request.items()})
