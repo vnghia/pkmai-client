@@ -51,7 +51,7 @@ class Move:
     def load_additional(move: Move, name_or_id: str, move_db: Dict[str, Any] = None):
         move_db = move_db or MoveDB.item(name_or_id)
 
-        move.id = move.id or move_db["id"]
+        move.id = move.id or MoveDB.to_id(name_or_id)
         move.name = move.name or move_db["name"]
         move.accuracy = move.accuracy or move_db["accuracy"]
         move.base_power = move.base_power or move_db["basePower"]
