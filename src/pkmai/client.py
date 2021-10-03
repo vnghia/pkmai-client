@@ -133,6 +133,25 @@ class Client(Room):
                 f"Timeout exceeded while searching for battle (format: {format}, team: {team})"
             )
 
+    async def accept_challenge(
+        self, challenger: str, team: str = "null", timeout: Optional[float] = None
+    ) -> Battle:
+        await self.send(f"/utm {team}")
+        await self.send(f"/accept {challenger}")
+        try:
+            await asyncio.wait_for(self.found_battle.wait(), timeout=timeout)
+            self.found_battle.clear()
+            found_battle_id = self.found_battle_id
+            if not found_battle_id:
+                raise ValueError("Missing found_battle_id")
+            else:
+                self.found_battle_id = None
+                return self.battles[found_battle_id]
+        except asyncio.TimeoutError:
+            raise TimeoutError(
+                f"Timeout exceeded while accepting challenge from {challenger}"
+            )
+
     # --------------------------------- Listener --------------------------------- #
 
     def listener_challstr(self, msg: List[str]):
