@@ -35,32 +35,32 @@ class Move:
     type: Literal["normal", "max", "z"] = "normal"
     disable: bool = False
 
-    data_from_dict: InitVar[bool] = True
-    move_dict: InitVar[Dict[str, Any]] = None
+    need_additional: InitVar[bool] = True
+    move_db: InitVar[Dict[str, Any]] = None
 
     def __post_init__(
         self,
         name_or_id: str,
-        data_from_dict: bool = True,
-        move_dict: Dict[str, Any] = None,
+        need_additional: bool = True,
+        move_db: Dict[str, Any] = None,
     ):
-        if data_from_dict:
-            self.load_from_dict(self, name_or_id, move_dict)
+        if need_additional:
+            self.load_additional(self, name_or_id, move_db)
 
     @staticmethod
-    def load_from_dict(move: Move, name_or_id: str, move_dict: Dict[str, Any] = None):
-        move_dict = move_dict or MoveDB.item(name_or_id)
+    def load_additional(move: Move, name_or_id: str, move_db: Dict[str, Any] = None):
+        move_db = move_db or MoveDB.item(name_or_id)
 
-        move.id = move.id or move_dict["id"]
-        move.name = move.name or move_dict["name"]
-        move.accuracy = move.accuracy or move_dict["accuracy"]
-        move.base_power = move.base_power or move_dict["basePower"]
-        move.maxpp = move.maxpp or move_dict["pp"]
+        move.id = move.id or move_db["id"]
+        move.name = move.name or move_db["name"]
+        move.accuracy = move.accuracy or move_db["accuracy"]
+        move.base_power = move.base_power or move_db["basePower"]
+        move.maxpp = move.maxpp or move_db["pp"]
         move.pp = move.maxpp
-        move.target = move.target or move_dict["target"]
-        if "isZ" in move_dict:
+        move.target = move.target or move_db["target"]
+        if "isZ" in move_db:
             move.type = "z"
-        elif "isMax" in move_dict:
+        elif "isMax" in move_db:
             move.type = "max"
         else:
             move.type = "normal"
