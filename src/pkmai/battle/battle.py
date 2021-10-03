@@ -75,4 +75,4 @@ class Battle(Chat):
         if msg[0]:
             raw = json.loads(msg[0])
             team = Team.from_request(raw)
-            self.teams[self.self_id] = team
+            self.teams[raw["side"]["id"]] = team
