@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from typing import Any, Dict, List, Tuple
 
 from pkmai.battle.pokemon import Pokemon, PokemonParser
@@ -8,9 +8,12 @@ from pkmai.battle.pokemon import Pokemon, PokemonParser
 
 @dataclass
 class Team:
+    active_size: InitVar[int]
+    actives: List[int] = field(default_factory=list)
     pokemons: List[Pokemon] = field(default_factory=list)
-    positions: Dict[str, int] = field(default_factory=dict, repr=False)
-    actives: Dict[int, int] = field(default_factory=dict, repr=False)
+
+    def __post_init__(self, active_size: int):
+        self.actives = self.actives or [-1] * active_size
 
     def __index(self, name: str) -> Tuple[int, Pokemon] | Tuple[None, None]:
         if type in self.pokemons:
@@ -33,24 +36,17 @@ class Team:
         pokemon.current_hp = current_hp
         pokemon.total_hp = pokemon.total_hp or total_hp
         pokemon.status = status
-        self.positions[pos] = index
-        self.actives[index] = ord(pos) - ord("a")
+        self.actives[ord(pos) - ord("a")] = index
 
-    def pokemon_from_request(self, pokemon_request: Dict[str, Any]):
-        active_index = 0
-        for pokemon_dict in pokemon_request["side"]["pokemon"]:
+    @classmethod
+    def from_request(cls, pokemon_request: Dict[str, Any]) -> Team:
+        pokemons: List[Pokemon] = []
+        actives: List[int] = []
+        for index, pokemon_dict in enumerate(pokemon_request["side"]["pokemon"]):
             name, _, _ = PokemonParser.parse_detail(pokemon_dict["details"])
-            index, pokemon = self.__index(name)
-            if not pokemon:
-                pokemon = Pokemon(name, pokemon_request=pokemon_dict)
-                self.pokemons.append(pokemon)
-            else:
-                pokemon.pokemon_from_request(pokemon_dict)
+            pokemon = Pokemon(name, pokemon_request=pokemon_dict)
+            pokemons.append(pokemon)
             if pokemon_dict["active"]:
-                if index not in self.actives:
-                    pokemon.active_from_request(pokemon_request["active"][active_index])
-                    active_index += 1
-                else:
-                    pokemon.active_from_request(
-                        pokemon_request["active"][self.actives[index]]
-                    )
+                actives.append(index)
+                pokemon.active_from_request(pokemon_request["active"][len(actives) - 1])
+        return cls(len(actives), actives, pokemons)

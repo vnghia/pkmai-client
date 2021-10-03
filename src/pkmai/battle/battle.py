@@ -74,6 +74,5 @@ class Battle(Chat):
     def listener_request(self, msg: List[str]):
         if msg[0]:
             raw = json.loads(msg[0])
-            team = Team()
-            team.pokemon_from_request(raw)
+            team = Team.from_request(raw)
             self.teams[self.self_id] = team
