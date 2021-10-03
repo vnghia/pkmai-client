@@ -128,8 +128,6 @@ class Pokemon:
             item,
         )
 
-    def update_attr_from_active_request(
-        self, active_request: Dict[str, Any]
-    ) -> Tuple[bool, bool]:
+    def update_attr_from_active_request(self, active_request: Dict[str, Any]):
         self.can_mega == "canMegaEvo" in active_request
-        return self.moveset.init_all_move_types_from_active_request(active_request)
+        self.moveset.init_all_move_types_from_active_request(active_request)

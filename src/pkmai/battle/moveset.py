@@ -16,6 +16,9 @@ class MovesData(TypedDict, total=False):
 @dataclass
 class Moveset:
     moves: MovesData = field(default_factory=lambda: MovesData())
+    is_max: bool = False
+    can_max: bool = False
+    can_z: bool = False
 
     # ---------------------------------- Manager --------------------------------- #
 
@@ -91,12 +94,12 @@ class Moveset:
             for move_request in move_list_request
         ]
 
-    def init_all_move_types_from_active_request(
-        self, active_request: Dict[str, Any]
-    ) -> Tuple[bool, bool]:
+    def init_all_move_types_from_active_request(self, active_request: Dict[str, Any]):
         can_max = "canDynamax" in active_request
         can_z = "canZMove" in active_request
-        if "maxMoves" in active_request:
+        has_max = "maxMoves" in active_request
+        is_max = True if has_max and not can_max else False
+        if has_max:
             self.init_special_move_types_from_active_request(
                 active_request["maxMoves"]["maxMoves"], "max"
             )
@@ -107,7 +110,9 @@ class Moveset:
         self.update_attr_all_move_types_from_active_move_list_request(
             active_request["moves"]
         )
-        return can_max, can_z
+        self.can_max = can_max
+        self.can_z = can_z
+        self.is_max = is_max
 
     @classmethod
     def init_normal_move_from_move_list_request(cls, move_list_request: List[str]):
